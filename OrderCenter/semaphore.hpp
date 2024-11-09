@@ -3,7 +3,7 @@
 class Semaphore
 {
 public:
-    explicit Semaphore(int count = 1) : count_(count) {}
+    explicit Semaphore(int count = 0) : count_{count} {}
 
     void acquire()
     {

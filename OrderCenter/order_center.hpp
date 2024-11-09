@@ -12,16 +12,18 @@ class OrderCenter
     OrderCenter();
     ~OrderCenter();
 
-    std::queue<std::string>& GetOrdeeQueue() { return order_queue_; }
-
   private:
     void CollectOrders(const std::uint8_t);
-    void PlaceOrderInQueue(std::uint8_t);
+    void PushOrderToQueue(std::uint8_t);
+    void ProcessOrders(const std::uint8_t);
+    void PopOrderFromQueue(const std::uint8_t);
 
     std::vector<std::thread> cachier_treads_{};
+    std::vector<std::thread> simons_treads_{};
+
     std::uint32_t number_of_order_{};
     std::queue<std::string> order_queue_{};
     std::mutex queue_mutex_;
-    std::condition_variable queue_condition_;
-    Semaphore queue_semaphore_{sem_count};
+    Semaphore queue_empty_slots_{MAX_QUEUE_SIZE};
+    Semaphore queue_filled_slots_{};
 };
