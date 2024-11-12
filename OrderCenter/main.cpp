@@ -24,6 +24,7 @@ int main()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    std::cout << "EXIT\n";
 
     return 0;
 }

@@ -7,11 +7,12 @@
 
 extern std::atomic<bool> stop_flag;
 static const std::uint8_t number_of_cachiers{5};
-static const std::uint8_t number_of_simons{2};
 
 OrderCenter::OrderCenter()
 {
     stop_flag.store(false);
+    ReleaseQueues();
+
     for (int it = 0; it < number_of_cachiers; ++it)
     {
         cachier_treads_.emplace_back(std::bind(&OrderCenter::CollectOrders, this, it + 1));
@@ -29,12 +30,16 @@ OrderCenter::~OrderCenter()
     for (auto& thread : cachier_treads_)
     {
         if (thread.joinable())
+        {
             thread.join();
+        }
     }
     for (auto& thread : simons_treads_)
     {
         if (thread.joinable())
+        {
             thread.join();
+        }
     }
 }
 
@@ -52,7 +57,9 @@ void OrderCenter::CollectOrders(std::uint8_t cachier_id)
 
 void OrderCenter::PushOrderToQueue(std::uint8_t cachier_id)
 {
-    queue_empty_slots_.acquire();
+    if (not queue_empty_slots_.acquire(stop_flag))
+        return;
+
     std::unique_lock<std::mutex> lock(queue_mutex_);
     order_queue_.push("Cachier_" + std::to_string(cachier_id) + "_order_no_" + std::to_string(++number_of_order_));
     std::cout << "Order placed: " << order_queue_.back() << " Q_Size " << order_queue_.size() << std::endl;
@@ -74,7 +81,8 @@ void OrderCenter::ProcessOrders(const std::uint8_t simon_id)
 
 void OrderCenter::PopOrderFromQueue(const std::uint8_t simon_id)
 {
-    queue_filled_slots_.acquire();
+    if (not queue_filled_slots_.acquire(stop_flag))
+        return;
     std::unique_lock<std::mutex> lock(queue_mutex_);
     if (not order_queue_.empty())
     {
@@ -83,4 +91,16 @@ void OrderCenter::PopOrderFromQueue(const std::uint8_t simon_id)
         std::cout << " Q_size " << order_queue_.size() << std::endl;
     }
     queue_empty_slots_.release();
+}
+
+void OrderCenter::ReleaseQueues()
+{
+    for (int i = 0; i < number_of_simons; ++i)
+    {
+        queue_filled_slots_.release();
+    }
+    for (int i = 0; i < number_of_cachiers; ++i)
+    {
+        queue_empty_slots_.release();
+    }
 }
