@@ -1,9 +1,9 @@
-#include <queue>
+#include <list>
 #include <string>
 #include <thread>
-#include "semaphore.hpp"
-
-static const std::uint8_t number_of_simons{2};
+#include "cashier.hpp"
+#include "order_center_manager.hpp"
+#include "simon.hpp"
 
 class OrderCenter
 {
@@ -12,18 +12,10 @@ class OrderCenter
     ~OrderCenter();
 
   private:
-    void CollectOrders(const std::uint8_t);
-    void PushOrderToQueue(std::uint8_t);
-    void ProcessOrders(const std::uint8_t);
-    void PopOrderFromQueue(const std::uint8_t);
-    void ReleaseQueues();
+    void OpenShop();
+    void CloseShop();
 
-    std::vector<std::thread> cachier_treads_{};
-    std::vector<std::thread> simons_treads_{};
-
-    std::uint32_t number_of_order_{};
-    std::queue<std::string> order_queue_{};
-    std::mutex queue_mutex_;
-    Semaphore queue_empty_slots_{number_of_simons};
-    Semaphore queue_filled_slots_{};
+    std::list<Cashier> cashiers_{};
+    std::list<Simon> simons_{};
+    OrderCenterManager<Simon> manager_;
 };

@@ -3,7 +3,7 @@
 #include <iostream>
 #include "order_center.hpp"
 
-std::atomic<bool> stop_flag(false);
+std::atomic_bool stop_flag(false);
 
 void SignalHandler(int signal)
 {
