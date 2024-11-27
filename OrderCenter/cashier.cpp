@@ -28,10 +28,10 @@ void Cashier::ProduceOrder()
     std::uniform_int_distribution<> dis(50, 500);
     while (not stop_flag_.load())
     {
-        std::cout << "Cashier_" + std::to_string(cashier_id_) + " order_No: " + std::to_string(++number_of_order_);
+        std::string order = "Cashier_" + std::to_string(cashier_id_) + " order_No: " + std::to_string(++number_of_order_);;
         std::this_thread::sleep_for(std::chrono::milliseconds(dis(gen)));
         auto simon = manager_.GetFreeSimon();
-        simon.ConsumeOrder();
+        simon.ConsumeOrder(order);
         simon.SimonJoin();
         manager_.ReleaseSimon(std::move(simon));
     }

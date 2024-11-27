@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <unordered_map>
 
 #define BUFFER_SIZE 1024
 static constexpr uint8_t number_of_simons{2};
@@ -19,8 +20,10 @@ class Dan
 
   private:
     void CreateSocket();
-    int SetNonBlocking(int socket);
+    int SetNonBlocking(int& socket);
     void InitializeAndRegisterEpoll();
+    bool RegisterClientWithEpoll(int&);
+    void HandleConnection(int&, std::unordered_map<int, std::string>&);
 
     struct sockaddr_in server_;
     int socket_, epoll_;

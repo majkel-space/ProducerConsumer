@@ -16,9 +16,12 @@ void Simon::SimonJoin()
         simon_tread_.join();
 }
 
-void Simon::ConsumeOrder()
+void Simon::ConsumeOrder(const std::string& order)
 {
-    std::cout << " Simon no " << (int)simon_id_ << std::endl;
+    order_.clear();
+    order_ = order + " Simon no " + std::to_string(simon_id_);
+    client.ConnectToServer(order_);
+    // std::cout << order_ << std::endl;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(50, 500);

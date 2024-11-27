@@ -4,8 +4,9 @@ project(OrderCenter)
 
 add_executable(client.o
     main.cpp
-    order_center.cpp
     cashier.cpp
+    client.cpp
+    order_center.cpp
     simon.cpp
 )
 
