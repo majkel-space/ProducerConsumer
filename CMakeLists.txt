@@ -5,3 +5,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(ProducerConsumer)
 
 add_subdirectory(OrderCenter)
+add_subdirectory(Warehouse)
