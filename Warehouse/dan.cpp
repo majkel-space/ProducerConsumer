@@ -3,46 +3,7 @@
 
 extern std::atomic<bool> stop_flag;
 
-Dan::Dan()
-{
-    CreateSocket();
-}
-
-Dan::~Dan()
-{
-    close(socket_);
-}
-
-void Dan::CreateSocket()
-{
-    if ((socket_ = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-    {
-        std::cerr <<"Socket creation failed/n";
-        exit(EXIT_FAILURE);
-    }
-    SetNonBlocking(socket_);
-
-    int temp{1};
-    if (setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, &temp, sizeof(temp)) < 0)
-    {
-        std::cerr << "Error: setsockopt failed\n";
-        close(socket_);
-        return;
-    }
-
-    server_.sin_family = AF_INET;
-    server_.sin_addr.s_addr = INADDR_ANY;
-    server_.sin_port = htons(port_);
-
-    if (bind(socket_, (struct sockaddr*)&server_, sizeof(server_)) < 0)
-    {
-        std::cerr << "Error: Bind Failed\n";
-        close(socket_);
-        return;
-    }
-}
-
-int Dan::SetNonBlocking(int& socket)
+int SetNonBlocking(int& socket)
 {
     int flags = fcntl(socket, F_GETFL, 0);
 
@@ -51,27 +12,86 @@ int Dan::SetNonBlocking(int& socket)
            : fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
+Dan::Dan()
+{
+    CreateSocket();
+}
+
+Dan::~Dan()
+{
+    close(server_socket_);
+}
+
+void Dan::CreateSocket()
+{
+    if ((server_socket_ = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        std::cerr << "Error: Socket not created\n";
+        exit(EXIT_FAILURE);
+    }
+    puts("Socket created");
+    SetNonBlocking(server_socket_);
+
+    int temp{1};
+    if (setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &temp, sizeof(temp)) < 0)
+    {
+        std::cerr << "Error: setsockopt failed\n";
+        close(server_socket_);
+        return;
+    }
+
+    server_.sin_family = AF_INET;
+    server_.sin_addr.s_addr = INADDR_ANY;
+    server_.sin_port = htons(port_);
+
+    if (bind(server_socket_, (struct sockaddr*)&server_, sizeof(server_)) < 0)
+    {
+        std::cerr << "Error: Bind Failed\n";
+        close(server_socket_);
+        return;
+    }
+    puts("Bind done");
+}
+
+void Dan::RegisterSocketWithEpoll()
+{
+    epoll_socket_ = epoll_create1(0);
+    if (epoll_socket_ == -1)
+    {
+        std::cerr << "Error: epoll_create1\n";
+        exit(EXIT_FAILURE);
+    }
+    epoll_fd_.events = EPOLLIN;
+    epoll_fd_.data.fd = server_socket_;
+    if (epoll_ctl(epoll_socket_, EPOLL_CTL_ADD, server_socket_, &epoll_fd_) == -1)
+    {
+        std::cerr << "Error: epoll_ctl server_socket_\n";
+        exit(EXIT_FAILURE);
+    }
+    puts("Socket registered with epoll");
+}
+
 void Dan::Listen()
 {
-    listen(socket_, 5);
-    InitializeAndRegisterEpoll();
+    listen(server_socket_, 5);
+    RegisterSocketWithEpoll();
 
     std::unordered_map<int, std::string> client_msgs_buffer{};
 
     while (not stop_flag)
     {
-        int number_of_events = epoll_wait(epoll_, waiting_events_, number_of_simons, -1);
+        int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, -1);
         for (int it = 0; it < number_of_events; ++it) {
-            if (waiting_events_[it].data.fd == socket_)
+            if (waiting_events_[it].data.fd == server_socket_)
             {
-                int client_fd = accept(socket_, NULL, NULL);
+                int client_fd = accept(server_socket_, NULL, NULL);
                 if (client_fd == -1)
                 {
                     std::cerr << "Error: Accept\n";
                     continue;
                 }
                 SetNonBlocking(client_fd);
-                if (RegisterClientWithEpoll(client_fd))
+                if (not RegisterClientWithEpoll(client_fd))
                 {
                     std::cerr << "Error: Epoll file descriptor\n";
                     close(client_fd);
@@ -86,29 +106,11 @@ void Dan::Listen()
     }
 }
 
-void Dan::InitializeAndRegisterEpoll()
-{
-    epoll_ = epoll_create1(0);
-    if (epoll_ == -1)
-    {
-        std::cerr << "epoll_create1\n";
-        exit(EXIT_FAILURE);
-    }
-
-    epoll_fd_.events = EPOLLIN;
-    epoll_fd_.data.fd = socket_;
-    if (epoll_ctl(epoll_, EPOLL_CTL_ADD, socket_, &epoll_fd_) == -1)
-    {
-        std::cerr << "epoll_ctl: socket_\n";
-        exit(EXIT_FAILURE);
-    }
-}
-
 bool Dan::RegisterClientWithEpoll(int& client_fd)
 {
-    epoll_fd_.events = EPOLLIN | EPOLLET;
+    epoll_fd_.events = EPOLLIN | EPOLLET;;
     epoll_fd_.data.fd = client_fd;
-    if (epoll_ctl(epoll_, EPOLL_CTL_ADD, client_fd, &epoll_fd_) == -1)
+    if (epoll_ctl(epoll_socket_, EPOLL_CTL_ADD, client_fd, &epoll_fd_) == -1)
     {
         return false;
     }
@@ -124,14 +126,14 @@ void Dan::HandleConnection(int& event_no, std::unordered_map<int, std::string>& 
     {
         std::cerr << "Error: recievev\n";
         close(client_fd);
-        epoll_ctl(epoll_, EPOLL_CTL_DEL, client_fd, NULL);
+        epoll_ctl(epoll_socket_, EPOLL_CTL_DEL, client_fd, NULL);
         client_msgs_buffer.erase(client_fd);
     }
     else if (count == 0)
     {
         std::cout << "Connection closed by client\n";
         close(client_fd);
-        epoll_ctl(epoll_, EPOLL_CTL_DEL, client_fd, NULL);
+        epoll_ctl(epoll_socket_, EPOLL_CTL_DEL, client_fd, NULL);
         client_msgs_buffer.erase(client_fd);
     }
     else

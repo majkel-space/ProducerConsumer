@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #define BUFFER_SIZE 1024
-static constexpr uint8_t number_of_simons{2};
+static constexpr uint8_t max_orders{10};
 
 class Dan
 {
@@ -20,13 +20,12 @@ class Dan
 
   private:
     void CreateSocket();
-    int SetNonBlocking(int& socket);
-    void InitializeAndRegisterEpoll();
+    void RegisterSocketWithEpoll();
     bool RegisterClientWithEpoll(int&);
     void HandleConnection(int&, std::unordered_map<int, std::string>&);
 
     struct sockaddr_in server_;
-    int socket_, epoll_;
+    int server_socket_, epoll_socket_;
     const uint16_t port_ = 1234;
-    struct epoll_event epoll_fd_, waiting_events_[number_of_simons];
+    struct epoll_event epoll_fd_, waiting_events_[max_orders];
 };
