@@ -23,6 +23,7 @@ class Dan
     void RegisterSocketWithEpoll();
     bool RegisterClientWithEpoll(int&);
     void HandleConnection(int&, std::unordered_map<int, std::string>&);
+    void SendConfirmation(int&, const std::string&);
 
     struct sockaddr_in server_;
     int server_socket_, epoll_socket_;

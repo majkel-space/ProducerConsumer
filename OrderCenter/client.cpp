@@ -35,7 +35,7 @@ void Client::ConnectToServer(const std::string& message)
     }
 
     SendMessage(message);
-    // GetResponse();
+    GetConfirmation();
     close(socket_);
 }
 
@@ -44,18 +44,18 @@ void Client::SendMessage(const std::string& message)
     send(socket_, message.c_str(), message.size(), 0);
 }
 
-// void Client::GetResponse()
-// {
-//     const int size = 1024;
-//     char buffer[size] = {0};
-//     int bytes_read = read(socket_, buffer, size - 1);
-//     if (bytes_read < 0)
-//     {
-//         std::cerr << "Error: Reading from Server\n";
-//     }
-//     else
-//     {
-//         buffer[bytes_read] = '\0';
-//         std::cout << buffer << std::endl;
-//     }
-// }
+void Client::GetConfirmation()
+{
+    const int size = 1024;
+    char buffer[size] = {0};
+    int bytes_read = read(socket_, buffer, size - 1);
+    if (bytes_read < 0)
+    {
+        std::cerr << "Error: Reading from Server\n";
+    }
+    else
+    {
+        buffer[bytes_read] = '\0';
+        std::cout << "Order: " << buffer << " - PLACED\n";
+    }
+}

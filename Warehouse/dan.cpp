@@ -1,4 +1,7 @@
 #include <atomic>
+#include <chrono>
+#include <random>
+#include <thread>
 #include "dan.hpp"
 
 extern std::atomic<bool> stop_flag;
@@ -138,9 +141,18 @@ void Dan::HandleConnection(int& event_no, std::unordered_map<int, std::string>& 
     }
     else
     {
-        //TODO temp chrono generator to delay anwser
         client_msgs_buffer[client_fd].append(buffer, count);
-        std::cout << "Received from client " << client_fd << ": " << client_msgs_buffer[client_fd] << std::endl;
+        std::cout << "Received from client: " << client_msgs_buffer.at(client_fd) << std::endl;
+        SendConfirmation(client_fd, client_msgs_buffer.at(client_fd));
         client_msgs_buffer[client_fd].clear();
     }
+}
+
+void Dan::SendConfirmation(int& socket, const std::string& message)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(50, 500);
+    std::this_thread::sleep_for(std::chrono::milliseconds(dis(gen)));
+    send(socket, message.c_str(), message.size(), 0);
 }

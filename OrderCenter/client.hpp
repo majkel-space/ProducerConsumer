@@ -14,7 +14,7 @@ class Client
   private:
     void CreateSocket();
     void SendMessage(const std::string&);
-    // void GetResponse();
+    void GetConfirmation();
 
   int socket_ = 0;
   struct sockaddr_in server_address_;
