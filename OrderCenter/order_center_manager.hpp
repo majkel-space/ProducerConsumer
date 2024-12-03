@@ -1,7 +1,7 @@
 #ifndef MANAGER
 #define MANAGER
 
-#include <list>
+#include <array>
 
 #include "cashier.hpp"
 #include "semaphore.hpp"
@@ -13,48 +13,48 @@ template <typename T>
 class OrderCenterManager
 {
   public:
-    OrderCenterManager(std::list<T>&& simons)
-        : simons_{std::move(simons)}
+    OrderCenterManager()
     {
-        InitializeSimons();
+        SetSimonsData();
     }
 
-    T GetFreeSimon()
+    T& GetFreeSimon()
     {
         free_simons_.acquire();
         std::unique_lock<std::mutex> lock(mutex_);
 
-        if (simons_.empty())
+        for (auto& simon : simons_)
         {
-            throw std::runtime_error("Error: no free Simons");
+            if (not simon.is_occupied_)
+            {
+                lock.unlock();
+                simon.is_occupied_.store(true);
+                occupied_simons_.release();
+                return simon;
+            }
         }
-
-        T simon = std::move(simons_.front());
-        simons_.pop_front();
-        lock.unlock();
-        occupied_simons_.release();
-        return std::move(simon);
+        throw std::runtime_error("Error: no free Simons");
     }
 
-    void ReleaseSimon(T&& simon)
+    void ReleaseSimon(T& simon)
     {
         occupied_simons_.acquire();
         std::unique_lock<std::mutex> lock(mutex_);
-        simons_.emplace_back(std::move(simon));
         lock.unlock();
+        simon.is_occupied_.store(false);
         free_simons_.release();
     }
 
   private:
-    void InitializeSimons()
+    void SetSimonsData()
     {
         for (std::uint8_t it = 0; it < number_of_simons; ++it)
         {
-            simons_.emplace_back(std::uint8_t(it + 1));
+            simons_.at(it).SetId(it + 1);
         }
     }
 
-    std::list<T> simons_;
+    std::array<T, number_of_simons> simons_{};
     std::mutex mutex_;
     Semaphore free_simons_{number_of_simons};
     Semaphore occupied_simons_{};

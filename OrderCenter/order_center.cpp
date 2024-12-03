@@ -9,7 +9,7 @@ std::atomic_bool cachiers_done{false};
 static const std::uint8_t number_of_cashiers{5};
 
 OrderCenter::OrderCenter()
-    : manager_{std::move(simons_)}
+    : manager_{}
 {
     stop_flag.store(false);
     OpenShop();
@@ -19,7 +19,6 @@ OrderCenter::~OrderCenter()
 {
     stop_flag.store(true);
     cashiers_.clear();
-    simons_.clear();
 }
 
 void OrderCenter::OpenShop()

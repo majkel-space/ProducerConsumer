@@ -2,12 +2,6 @@
 #include <iostream>
 #include "simon.hpp"
 
-Simon::Simon(const std::uint8_t simon_id)
-    : simon_id_{simon_id}
-{
-    std::cout << "CTOR simon no " << (int)simon_id_ << std::endl;
-}
-
 void Simon::SimonJoin()
 {
     if (simon_tread_.joinable())

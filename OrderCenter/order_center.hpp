@@ -16,6 +16,5 @@ class OrderCenter
     void CloseShop();
 
     std::list<Cashier> cashiers_{};
-    std::list<Simon> simons_{};
     OrderCenterManager<Simon> manager_;
 };

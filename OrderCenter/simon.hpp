@@ -11,15 +11,14 @@
 class Simon
 {
   public:
-    Simon(const std::uint8_t);
-    Simon(const Simon&) = delete;
-    Simon& operator=(const Simon&) = delete;
-    Simon(Simon&&) = default;
-    Simon& operator=(Simon&&) = default;
+    Simon() = default;
     ~Simon() = default;
 
     void ConsumeOrder(const std::string&);
     void SimonJoin();
+    void SetId(const std::uint8_t id) { simon_id_ = id; }
+
+    std::atomic_bool is_occupied_{false};
 
   private:
     std::uint8_t simon_id_{};

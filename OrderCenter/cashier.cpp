@@ -30,9 +30,9 @@ void Cashier::ProduceOrder()
     {
         std::string order = "Cashier_" + std::to_string(cashier_id_) + " order_No: " + std::to_string(++number_of_order_);;
         std::this_thread::sleep_for(std::chrono::milliseconds(dis(gen)));
-        auto simon = manager_.GetFreeSimon();
+        auto& simon = manager_.GetFreeSimon();
         simon.ConsumeOrder(order);
         simon.SimonJoin();
-        manager_.ReleaseSimon(std::move(simon));
+        manager_.ReleaseSimon(simon);
     }
 }
