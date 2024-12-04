@@ -18,6 +18,14 @@ class OrderCenterManager
         SetSimonsData();
     }
 
+    void ProduceOrder(const std::string& order)
+    {
+        auto& simon = GetFreeSimon();
+        simon.ConsumeOrder(order);
+        ReleaseSimon(simon);
+    }
+
+  private:
     T& GetFreeSimon()
     {
         free_simons_.acquire();
@@ -45,7 +53,6 @@ class OrderCenterManager
         free_simons_.release();
     }
 
-  private:
     void SetSimonsData()
     {
         for (std::uint8_t it = 0; it < number_of_simons; ++it)

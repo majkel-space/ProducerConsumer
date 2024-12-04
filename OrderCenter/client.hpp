@@ -6,13 +6,14 @@
 class Client
 {
   public:
-    Client() = default;
-    ~Client() = default;
+    Client();
+    ~Client();
 
-    void ConnectToServer(const std::string&);
+    void PlaceOrder(const std::string&);
 
   private:
     void CreateSocket();
+    void ConnectToServer();
     void SendMessage(const std::string&);
     void GetConfirmation();
 

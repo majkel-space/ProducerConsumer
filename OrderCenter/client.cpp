@@ -7,6 +7,23 @@
 
 static constexpr int max_attempts{5};
 
+Client::Client()
+{
+    CreateSocket();
+    ConnectToServer();
+}
+
+Client::~Client()
+{
+    close(socket_);
+}
+
+void Client::PlaceOrder(const std::string& order)
+{
+    SendMessage(order);
+    GetConfirmation();
+}
+
 void Client::CreateSocket()
 {
     socket_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -19,9 +36,9 @@ void Client::CreateSocket()
     server_address_.sin_port = htons(port);
 }
 
-void Client::ConnectToServer(const std::string& message)
+void Client::ConnectToServer()
 {
-    CreateSocket();
+    // CreateSocket();
     if (inet_pton(AF_INET, "127.0.0.1", &server_address_.sin_addr) <= 0)
     {
         std::cerr << "Error: Invalid Server address\n";
@@ -34,9 +51,9 @@ void Client::ConnectToServer(const std::string& message)
         return;
     }
 
-    SendMessage(message);
-    GetConfirmation();
-    close(socket_);
+    // SendMessage(message);
+    // GetConfirmation();
+    // close(socket_);
 }
 
 void Client::SendMessage(const std::string& message)
