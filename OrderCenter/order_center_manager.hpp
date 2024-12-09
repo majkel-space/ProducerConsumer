@@ -29,13 +29,12 @@ class OrderCenterManager
     T& GetFreeSimon()
     {
         free_simons_.acquire();
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
 
         for (auto& simon : simons_)
         {
-            if (not simon.is_occupied_)
+            if (not simon.is_occupied_.load())
             {
-                lock.unlock();
                 simon.is_occupied_.store(true);
                 occupied_simons_.release();
                 return simon;
@@ -47,8 +46,7 @@ class OrderCenterManager
     void ReleaseSimon(T& simon)
     {
         occupied_simons_.acquire();
-        std::unique_lock<std::mutex> lock(mutex_);
-        lock.unlock();
+        std::lock_guard<std::mutex> lock(mutex_);
         simon.is_occupied_.store(false);
         free_simons_.release();
     }

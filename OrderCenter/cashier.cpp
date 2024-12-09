@@ -11,9 +11,7 @@ Cashier::Cashier(const std::uint8_t cashier_id, std::atomic_bool& stop_flag, Ord
       stop_flag_{stop_flag},
       manager_{manager},
       cashier_tread_{std::bind(&Cashier::ProduceOrder, this)}
-{
-    std::cout << "CTOR cashier no " << (int)cashier_id_ << std::endl;
-}
+{}
 
 Cashier::~Cashier()
 {
