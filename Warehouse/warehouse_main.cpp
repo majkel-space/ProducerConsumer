@@ -22,7 +22,7 @@ int main()
     std::cout << "Hello in Warehouse\n";
 
     Dan dan;
-    dan.Listen();
+    dan.ProcessOrders();
 
     while(not stop_flag.load())
     {

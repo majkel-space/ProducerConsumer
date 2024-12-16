@@ -5,6 +5,7 @@ project(Warehouse)
 add_executable(server.o
     warehouse_main.cpp
     dan.cpp
+    server.cpp
 )
 
 target_include_directories(server.o PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
