@@ -5,8 +5,6 @@
 #include <thread>
 #include "server.hpp"
 
-
-
 int SetNonBlocking(int& socket)
 {
     int flags = fcntl(socket, F_GETFL, 0);
@@ -16,7 +14,8 @@ int SetNonBlocking(int& socket)
            : fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-Server::Server()
+Server::Server(Queue<std::string>& queue)
+    : queue_{queue}
 {
     CreateSocket();
 }
@@ -78,7 +77,7 @@ void Server::RegisterSocketWithEpoll()
     puts("Socket registered with epoll");
 }
 
-void Server::Listen(std::unordered_map<int, std::string>& client_msgs_buffer)
+void Server::Listen()
 {
     int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, -1);
     for (int it = 0; it < number_of_events; ++it) {
@@ -96,11 +95,10 @@ void Server::Listen(std::unordered_map<int, std::string>& client_msgs_buffer)
                 std::cerr << "Error: Epoll file descriptor\n";
                 close(client_fd);
             }
-            client_msgs_buffer[client_fd] = "";
         }
         else
         {
-            HandleConnection(it, client_msgs_buffer);
+            HandleConnection(it);
         }
     }
 }
@@ -116,7 +114,7 @@ bool Server::RegisterClientWithEpoll(int& client_fd)
     return true;
 }
 
-void Server::HandleConnection(int& event_no, std::unordered_map<int, std::string>& client_msgs_buffer)
+void Server::HandleConnection(int& event_no)
 {
     char buffer[BUFFER_SIZE];
     int client_fd = waiting_events_[event_no].data.fd;
@@ -126,21 +124,13 @@ void Server::HandleConnection(int& event_no, std::unordered_map<int, std::string
         std::cerr << "Error: recievev\n";
         close(client_fd);
         epoll_ctl(epoll_socket_, EPOLL_CTL_DEL, client_fd, NULL);
-        client_msgs_buffer.erase(client_fd);
-    }
-    else if (count == 0)
-    {
-        std::cout << "Connection closed by client\n";
-        close(client_fd);
-        epoll_ctl(epoll_socket_, EPOLL_CTL_DEL, client_fd, NULL);
-        client_msgs_buffer.erase(client_fd);
     }
     else
     {
-        client_msgs_buffer[client_fd].append(buffer, count);
-        std::cout << "Received from client: " << client_msgs_buffer.at(client_fd) << std::endl;
-        SendConfirmation(client_fd, client_msgs_buffer.at(client_fd));
-        client_msgs_buffer[client_fd].clear();
+        std::string message(buffer, count);
+        std::cout << "Received from client: " << message << std::endl;
+        queue_.Push(message);
+        SendConfirmation(client_fd, message);
     }
 }
 

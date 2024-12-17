@@ -1,16 +1,16 @@
 #include <atomic>
-#include <chrono>
-#include <random>
-#include <thread>
 #include "dan.hpp"
 
 extern std::atomic<bool> stop_flag;
 
+Dan::Dan()
+    : server_{queue_}
+{}
+
 void Dan::ProcessOrders()
 {
-    //TODO put orders to queue
     while (not stop_flag)
     {
-        server_.Listen(client_orders_);
+        server_.Listen();
     }
 }
