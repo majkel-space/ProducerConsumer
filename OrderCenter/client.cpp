@@ -38,7 +38,6 @@ void Client::CreateSocket()
 
 void Client::ConnectToServer()
 {
-    // CreateSocket();
     if (inet_pton(AF_INET, "127.0.0.1", &server_address_.sin_addr) <= 0)
     {
         std::cerr << "Error: Invalid Server address\n";
@@ -50,10 +49,6 @@ void Client::ConnectToServer()
         close(socket_);
         return;
     }
-
-    // SendMessage(message);
-    // GetConfirmation();
-    // close(socket_);
 }
 
 void Client::SendMessage(const std::string& message)

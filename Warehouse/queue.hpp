@@ -1,10 +1,10 @@
 #ifndef QUEUE
 #define QUEUE
 
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 #include <optional>
+#include <queue>
 
 template <typename T>
 class Queue
@@ -13,10 +13,10 @@ class Queue
     Queue() = default;
     ~Queue() = default;
 
-    void Push(const T& value)
+    void Push(T&& value)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        queue_.push(value);
+        queue_.push(std::move(value));
         cv_.notify_one();
     }
 
@@ -27,16 +27,16 @@ class Queue
         {
             return std::nullopt;
         }
-        T value = queue_.front();
+        T value = std::move(queue_.front());
         queue_.pop();
         return value;
     }
 
-    T WaitPop()
+    T WaitAndPop()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         cv_.wait(lock, [this]() { return !queue_.empty(); });
-        T value = queue_.front();
+        T value = std::move(queue_.front());
         queue_.pop();
         return value;
     }

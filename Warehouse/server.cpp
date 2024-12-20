@@ -14,8 +14,8 @@ int SetNonBlocking(int& socket)
            : fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-Server::Server(Queue<std::string>& queue)
-    : queue_{queue}
+Server::Server(Queue<std::string>& order_queue)
+    : order_queue_{order_queue}
 {
     CreateSocket();
 }
@@ -23,6 +23,7 @@ Server::Server(Queue<std::string>& queue)
 Server::~Server()
 {
     close(server_socket_);
+    std::cout << "Server DTOR\n";
 }
 
 void Server::CreateSocket()
@@ -129,8 +130,8 @@ void Server::HandleConnection(int& event_no)
     {
         std::string message(buffer, count);
         std::cout << "Received from client: " << message << std::endl;
-        queue_.Push(message);
         SendConfirmation(client_fd, message);
+        order_queue_.Push(std::move(message));
     }
 }
 

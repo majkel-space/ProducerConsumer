@@ -2,7 +2,7 @@
 #include <csignal>
 #include <iostream>
 #include <thread>
-#include "dan.hpp"
+#include "warehouse.hpp"
 
 std::atomic_bool stop_flag(false);
 
@@ -20,10 +20,9 @@ int main()
     std::signal(SIGINT, SignalHandler);
 
     std::cout << "Hello in Warehouse\n";
-
-    Dan dan;
-    dan.ProcessOrders();
-
+    Warehouse warehouse{};
+    warehouse.OpenWarehouse();
+    std::cout << "main\n";
     while(not stop_flag.load())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

@@ -29,5 +29,5 @@ class Server
     int server_socket_, epoll_socket_;
     const uint16_t port_ = 1234;
     struct epoll_event epoll_fd_, waiting_events_[max_orders];
-    Queue<std::string>& queue_;
+    Queue<std::string>& order_queue_;
 };
