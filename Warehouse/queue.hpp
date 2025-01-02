@@ -32,19 +32,15 @@ class Queue
         return value;
     }
 
-    T WaitAndPop()
-    {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this]() { return !queue_.empty(); });
-        T value = std::move(queue_.front());
-        queue_.pop();
-        return value;
-    }
-
     bool IsEmpty() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
         return queue_.empty();
+    }
+
+    int Size() const
+    {
+        return queue_.size();
     }
 
   private:

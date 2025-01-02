@@ -1,12 +1,13 @@
 #include <chrono>
 #include <iostream>
+#include <functional>
 #include <random>
 #include <thread>
 #include "delivery_car.hpp"
 
 
-static constexpr std::uint16_t min_delivery_time{1000U};
-static constexpr std::uint16_t max_delivery_time{5000U};
+static constexpr std::uint16_t min_delivery_time{100U};
+static constexpr std::uint16_t max_delivery_time{500U};
 static constexpr std::uint16_t min_delivery_multipl{0};
 static constexpr std::uint16_t max_delivery_multipl{5};
 
@@ -26,20 +27,27 @@ int GenerateDeliveryTime()
     return distribution(gen);
 }
 
-DeliveryCar::DeliveryCar(std::uint8_t id)
-    : id_{id}
+DeliveryCar::DeliveryCar(std::uint8_t id, std::atomic_bool& stop_flag,
+                         Queue<std::string>& order_queue, Queue<std::future<std::string>>& delivery_queue)
+    : id_{id}, stop_flag_{stop_flag},
+      delivery_thread_{std::bind(&DeliveryCar::StartDelivering, this, std::ref(order_queue), std::ref(delivery_queue))}
 {}
+
+DeliveryCar::~DeliveryCar()
+{
+    if (delivery_thread_.joinable())
+        delivery_thread_.join();
+}
 
 void DeliveryCar::StartDelivering(Queue<std::string>& order_queue, Queue<std::future<std::string>>& delivery_queue)
 {
-    const auto order = order_queue.Pop();
-    if (order)
+    while(not stop_flag_.load())
     {
-        DeliverOrder(order.value(), delivery_queue);
-    }
-    else
-    {
-        std::cerr << "ERROR: DeliceryCar - order has no value\n";
+        const auto order = order_queue.Pop();
+        if (order)
+        {
+            DeliverOrder(order.value(), delivery_queue);
+        }
     }
 }
 

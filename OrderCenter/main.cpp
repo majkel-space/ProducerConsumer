@@ -24,7 +24,7 @@ int main()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    std::cout << "EXIT\n";
+    std::cout << "EXIT OrderCenter\n";
 
     return 0;
 }

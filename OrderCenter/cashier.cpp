@@ -23,7 +23,7 @@ void Cashier::ProduceOrder()
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(50, 500);
+    std::uniform_int_distribution<> dis(500, 3000);
     while (not stop_flag_.load())
     {
         std::string order = "Cashier_" + std::to_string(cashier_id_) + " order_No: " + std::to_string(++number_of_order_);;

@@ -22,7 +22,6 @@ int main()
     std::cout << "Hello in Warehouse\n";
     Warehouse warehouse{};
     warehouse.OpenWarehouse();
-    std::cout << "main\n";
     while(not stop_flag.load())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

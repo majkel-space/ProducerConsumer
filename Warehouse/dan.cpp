@@ -6,14 +6,11 @@ Dan::Dan(std::atomic_bool& stop_flag, Queue<std::string>& order_queue, Queue<std
     : stop_flag_{stop_flag}, order_queue_{order_queue}, delivery_queue_{delivery_queue}, server_{order_queue},
       collect_orders_thread_{std::thread(&Dan::ProcessOrders, this)},
       monitor_deliveries_thread_{std::thread(&Dan::MonitorDeliveries, this)}
-{
-    std::cout << "Dan CTOR\n";
-}
+{}
 
 Dan::~Dan()
 {
-    std::cout << "Dan DTOR\n";
-    stop_flag.store(true);
+    stop_flag_.store(true);
     if (collect_orders_thread_.joinable())
     {
         collect_orders_thread_.join();
@@ -31,7 +28,6 @@ void Dan::ProcessOrders()
         server_.Listen();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    std::cout << "Dan ProcessOrders END\n";
 }
 
 void Dan::MonitorDeliveries()
