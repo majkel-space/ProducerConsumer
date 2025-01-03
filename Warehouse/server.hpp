@@ -13,7 +13,7 @@
 #define BUFFER_SIZE 1024
 static constexpr std::uint8_t max_orders{10};
 
-class Warehouse;
+class Dan;
 
 class Server
 {
@@ -21,13 +21,13 @@ class Server
     Server();
     ~Server();
 
-    void Listen(Warehouse&);
+    void Listen(Dan&);
 
   private:
     void CreateSocket();
     void RegisterSocketWithEpoll();
     bool RegisterClientWithEpoll(int&);
-    void HandleConnection(Warehouse&, int&);
+    void HandleConnection(Dan&, int&);
     void SendConfirmation(int&, const std::string&);
 
     struct sockaddr_in server_;

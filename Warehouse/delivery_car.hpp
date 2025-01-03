@@ -7,6 +7,7 @@
 #include "queue.hpp"
 
 class Warehouse;
+struct Order;
 
 class DeliveryCar
 {
@@ -14,8 +15,7 @@ class DeliveryCar
     DeliveryCar(std::uint8_t);
     ~DeliveryCar();
 
-    void StartDelivering(Warehouse&, Queue<std::future<std::string>>&);
-    void DeliverOrder(const std::string&, Queue<std::future<std::string>>&);
+    void DeliverOrder(Order&, std::promise<Order>&);
     void Join();
 
   private:

@@ -3,8 +3,8 @@
 #include <iostream>
 #include <random>
 #include <thread>
+#include "dan.hpp"
 #include "server.hpp"
-#include "warehouse.hpp"
 
 int SetNonBlocking(int& socket)
 {
@@ -78,7 +78,7 @@ void Server::RegisterSocketWithEpoll()
     puts("Socket registered with epoll");
 }
 
-void Server::Listen(Warehouse& warehouse)
+void Server::Listen(Dan& dan)
 {
     int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, -1);
     for (int it = 0; it < number_of_events; ++it) {
@@ -99,7 +99,7 @@ void Server::Listen(Warehouse& warehouse)
         }
         else
         {
-            HandleConnection(warehouse, it);
+            HandleConnection(dan, it);
         }
     }
 }
@@ -115,14 +115,14 @@ bool Server::RegisterClientWithEpoll(int& client_fd)
     return true;
 }
 
-void Server::HandleConnection(Warehouse& warehouse, int& event_no)
+void Server::HandleConnection(Dan& dan, int& event_no)
 {
     char buffer[BUFFER_SIZE];
     int client_fd = waiting_events_[event_no].data.fd;
     ssize_t count = recv(client_fd, buffer, BUFFER_SIZE, 0);
     if (count == -1)
     {
-        std::cerr << "Error: recievev\n";
+        std::cerr << "Error: recieved\n";
         close(client_fd);
         epoll_ctl(epoll_socket_, EPOLL_CTL_DEL, client_fd, NULL);
     }
@@ -131,7 +131,7 @@ void Server::HandleConnection(Warehouse& warehouse, int& event_no)
         std::string message(buffer, count);
         std::cout << "Received from client: " << message << std::endl;
         SendConfirmation(client_fd, message);
-        warehouse.AddNewOrder(std::move(message));
+        dan.RegisterNewOrder(std::move(message));
     }
 }
 
