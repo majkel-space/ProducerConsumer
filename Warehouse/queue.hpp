@@ -1,7 +1,6 @@
 #ifndef QUEUE
 #define QUEUE
 
-#include <condition_variable>
 #include <mutex>
 #include <optional>
 #include <queue>
@@ -17,7 +16,6 @@ class Queue
     {
         std::lock_guard<std::mutex> lock(mutex_);
         queue_.push(std::move(value));
-        cv_.notify_one();
     }
 
     std::optional<T> Pop()
@@ -32,7 +30,7 @@ class Queue
         return value;
     }
 
-    bool IsEmpty() const
+    bool IsEmpty()
     {
         std::lock_guard<std::mutex> lock(mutex_);
         return queue_.empty();
@@ -46,7 +44,6 @@ class Queue
   private:
     std::mutex mutex_;
     std::queue<T> queue_;
-    std::condition_variable cv_;
 };
 
 #endif //QUEUE

@@ -1,9 +1,10 @@
 
 #include <functional>
 #include "dan.hpp"
+#include "warehouse.hpp"
 
-Dan::Dan(std::atomic_bool& stop_flag, Queue<std::string>& order_queue, Queue<std::future<std::string>>& delivery_queue)
-    : stop_flag_{stop_flag}, order_queue_{order_queue}, delivery_queue_{delivery_queue}, server_{order_queue},
+Dan::Dan(std::atomic_bool& stop_flag, Warehouse& warehouse, Queue<std::future<std::string>>& delivery_queue)
+    : stop_flag_{stop_flag}, warehouse_{warehouse}, delivery_queue_{delivery_queue}, server_{},
       collect_orders_thread_{std::thread(&Dan::ProcessOrders, this)},
       monitor_deliveries_thread_{std::thread(&Dan::MonitorDeliveries, this)}
 {}
@@ -25,7 +26,7 @@ void Dan::ProcessOrders()
 {
     while (not stop_flag_.load())
     {
-        server_.Listen();
+        server_.Listen(warehouse_);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }

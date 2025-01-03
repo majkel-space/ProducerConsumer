@@ -4,6 +4,7 @@
 #include <random>
 #include <thread>
 #include "server.hpp"
+#include "warehouse.hpp"
 
 int SetNonBlocking(int& socket)
 {
@@ -14,8 +15,7 @@ int SetNonBlocking(int& socket)
            : fcntl(socket, F_SETFL, flags | O_NONBLOCK);
 }
 
-Server::Server(Queue<std::string>& order_queue)
-    : order_queue_{order_queue}
+Server::Server()
 {
     CreateSocket();
 }
@@ -78,7 +78,7 @@ void Server::RegisterSocketWithEpoll()
     puts("Socket registered with epoll");
 }
 
-void Server::Listen()
+void Server::Listen(Warehouse& warehouse)
 {
     int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, -1);
     for (int it = 0; it < number_of_events; ++it) {
@@ -99,7 +99,7 @@ void Server::Listen()
         }
         else
         {
-            HandleConnection(it);
+            HandleConnection(warehouse, it);
         }
     }
 }
@@ -115,7 +115,7 @@ bool Server::RegisterClientWithEpoll(int& client_fd)
     return true;
 }
 
-void Server::HandleConnection(int& event_no)
+void Server::HandleConnection(Warehouse& warehouse, int& event_no)
 {
     char buffer[BUFFER_SIZE];
     int client_fd = waiting_events_[event_no].data.fd;
@@ -131,7 +131,7 @@ void Server::HandleConnection(int& event_no)
         std::string message(buffer, count);
         std::cout << "Received from client: " << message << std::endl;
         SendConfirmation(client_fd, message);
-        order_queue_.Push(std::move(message));
+        warehouse.AddNewOrder(std::move(message));
     }
 }
 

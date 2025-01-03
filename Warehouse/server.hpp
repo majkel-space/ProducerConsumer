@@ -1,3 +1,6 @@
+#ifndef SERVER
+#define SERVER
+
 #include <cstdint>
 #include <cstring>
 #include <sys/epoll.h>
@@ -10,24 +13,27 @@
 #define BUFFER_SIZE 1024
 static constexpr std::uint8_t max_orders{10};
 
+class Warehouse;
+
 class Server
 {
   public:
-    Server(Queue<std::string>&);
+    Server();
     ~Server();
 
-    void Listen();
+    void Listen(Warehouse&);
 
   private:
     void CreateSocket();
     void RegisterSocketWithEpoll();
     bool RegisterClientWithEpoll(int&);
-    void HandleConnection(int&);
+    void HandleConnection(Warehouse&, int&);
     void SendConfirmation(int&, const std::string&);
 
     struct sockaddr_in server_;
     int server_socket_, epoll_socket_;
     const uint16_t port_ = 1234;
     struct epoll_event epoll_fd_, waiting_events_[max_orders];
-    Queue<std::string>& order_queue_;
 };
+
+#endif //SERVER

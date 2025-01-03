@@ -4,6 +4,7 @@
 #include <random>
 #include <thread>
 #include "delivery_car.hpp"
+#include "warehouse.hpp"
 
 
 static constexpr std::uint16_t min_delivery_time{100U};
@@ -27,28 +28,28 @@ int GenerateDeliveryTime()
     return distribution(gen);
 }
 
-DeliveryCar::DeliveryCar(std::uint8_t id, std::atomic_bool& stop_flag,
-                         Queue<std::string>& order_queue, Queue<std::future<std::string>>& delivery_queue)
-    : id_{id}, stop_flag_{stop_flag},
-      delivery_thread_{std::bind(&DeliveryCar::StartDelivering, this, std::ref(order_queue), std::ref(delivery_queue))}
-{}
+DeliveryCar::DeliveryCar(std::uint8_t id)
+    : id_{id}
+{
+    stop_flag_.store(false);
+}
 
 DeliveryCar::~DeliveryCar()
 {
-    if (delivery_thread_.joinable())
-        delivery_thread_.join();
+    stop_flag_.store(true);
 }
 
-void DeliveryCar::StartDelivering(Queue<std::string>& order_queue, Queue<std::future<std::string>>& delivery_queue)
+void DeliveryCar::StartDelivering(Warehouse& warehouse, Queue<std::future<std::string>>& delivery_queue)
 {
-    while(not stop_flag_.load())
-    {
-        const auto order = order_queue.Pop();
-        if (order)
+    delivery_thread_ = std::thread([this, &warehouse, &delivery_queue]() {
+        while (true)
         {
+            auto order = warehouse.GetNextOrder();
+            if (not order) { break; }
             DeliverOrder(order.value(), delivery_queue);
+
         }
-    }
+    });
 }
 
 void DeliveryCar::DeliverOrder(const std::string& order, Queue<std::future<std::string>>& delivery_queue)
@@ -67,4 +68,10 @@ void DeliveryCar::DeliverOrder(const std::string& order, Queue<std::future<std::
 
     std::cout << "DeliveryCar " << static_cast<int>(id_) << ": " << order << " - DELIVERED"
         << " Delivery time: " << delivery_time << "ms. Actual time: " << actual_time  << "ms" << std::endl;
+}
+
+void DeliveryCar::Join()
+{
+    if (delivery_thread_.joinable())
+        delivery_thread_.join();
 }

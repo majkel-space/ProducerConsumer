@@ -4,18 +4,52 @@
 #include "warehouse.hpp"
 
 extern std::atomic<bool> stop_flag;
-static constexpr std::uint8_t number_of_delivery_cars{3U};
+
+Warehouse::Warehouse()
+{
+    stop_flag.store(false);
+}
+
+Warehouse::~Warehouse()
+{
+    stop_flag.store(true);
+    cv_.notify_all();
+}
 
 void Warehouse::OpenWarehouse()
 {
-    Dan dan{stop_flag, order_queue_, delivery_queue_};
-    for (auto it = 0U; it < number_of_delivery_cars; ++it)
+    Dan dan{stop_flag, *this, delivery_queue_};
+    for (auto& delivery_car : delivery_cars_)
     {
-        DeliveryCar delivery_car(it + 1, stop_flag, order_queue_, delivery_queue_);
+        delivery_car.StartDelivering(*this, delivery_queue_);
     }
+
     while (not stop_flag.load())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    std::cout << "OpenWarehouse END\n";
+}
+
+void Warehouse::AddNewOrder(std::string&& order)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        order_queue_.Push(std::move(order));
+    }
+    cv_.notify_one();
+}
+
+std::optional<std::string> Warehouse::GetNextOrder()
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    cv_.wait(lock, [this]() {
+        return stop_flag.load() or not order_queue_.IsEmpty();
+    });
+
+    if (stop_flag.load())
+    {
+        return std::nullopt;
+    }
+
+    return order_queue_.Pop();
 }
