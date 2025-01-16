@@ -7,6 +7,7 @@
 extern std::atomic<bool> stop_flag;
 static constexpr std::uint16_t min_delivery_time{100U};
 static constexpr std::uint16_t max_delivery_time{500U};
+static constexpr std::uint8_t no_of_delivery_cars{3U};
 
 int GenerateDeliveryTime()
 {
@@ -24,58 +25,29 @@ Warehouse::Warehouse()
 Warehouse::~Warehouse()
 {
     stop_flag.store(true);
-    cv_.notify_all();
-    for (auto& delivery_car : delivery_cars_)
-    {
-        delivery_car.Join();
-    }
 }
 
 void Warehouse::OpenWarehouse()
 {
     Dan dan{stop_flag, *this};
-
-    std::thread monitor_thread([this, &dan]() {
-        while (!stop_flag.load())
-        {
-            std::optional<std::promise<Order>> promise;
-            {
-                promise = delivery_queue_.Pop();
-            }
-            if (promise)
-            {
-                std::thread([&dan, promise = std::move(promise.value())]() mutable {
-                    auto future = promise.get_future();
-                    dan.MonitorDeliveries(std::move(future));
-                }).detach();
-            }
-        }
-    });
-
-    std::vector<std::thread> delivery_threads{};
-    StartDelivering(delivery_threads);
+    DeliveryCar dc1 (1U, *this, stop_flag);
+    DeliveryCar dc2 (2U, *this, stop_flag);
+    DeliveryCar dc3 (3U, *this, stop_flag);
 
     while (not stop_flag.load())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    
-    for (auto& delivery_car : delivery_cars_)
-    {
-        delivery_car.Join();
-    }
-    if (monitor_thread.joinable())
-    {
-        monitor_thread.join();
-    }
+    cv_.notify_all();
 }
 
-void Warehouse::AddNewOrder(std::string&& order)
+void Warehouse::AddNewOrder(std::string&& msg)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto delivery_time = GenerateDeliveryTime();
-        order_queue_.Push(Order{std::move(order), delivery_time, 0});
+        auto order = Order{std::move(msg), delivery_time, 0};
+        order_queue_.Push(std::move(order));
     }
     cv_.notify_one();
 }
@@ -91,25 +63,4 @@ std::optional<Order> Warehouse::GetNextOrder()
         return std::nullopt;
     }
     return order_queue_.Pop();
-}
-
-void Warehouse::StartDelivering(std::vector<std::thread>& delivery_threads)
-{
-    for (auto& delivery_car : delivery_cars_)
-    {
-        delivery_threads.emplace_back([this, &delivery_car]() {
-            while (!stop_flag.load())
-            {
-                auto order = GetNextOrder();
-                if (not order)
-                {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    continue;
-                }
-                std::promise<Order> promise;
-                delivery_car.DeliverOrder(order.value(), promise);
-                delivery_queue_.Push(std::move(promise));
-            }
-        });
-    }
 }

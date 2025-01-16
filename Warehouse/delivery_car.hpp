@@ -12,16 +12,18 @@ struct Order;
 class DeliveryCar
 {
   public:
-    DeliveryCar(std::uint8_t);
+    DeliveryCar(std::uint8_t, Warehouse&, std::atomic_bool&);
     ~DeliveryCar();
 
-    void DeliverOrder(Order&, std::promise<Order>&);
-    void Join();
-
   private:
+    void StartDelivering();
+    void DeliverOrder(Order&);
     std::uint8_t id_;
-    std::atomic_bool stop_flag_;
+    Warehouse& warehouse_;
+    std::atomic_bool& stop_flag_;
+    std::condition_variable& cv_;
     std::thread delivery_thread_;
+    std::mutex mutex_;
 };
 
 #endif //DELIVERYCAR

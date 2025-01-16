@@ -26,16 +26,14 @@ class Warehouse
 
     void OpenWarehouse();
     void AddNewOrder(std::string&&);
+    std::optional<Order> GetNextOrder();
+    bool HasOrders() {return order_queue_.IsEmpty(); }
+    std::condition_variable& GetCV() { return cv_; }
 
   private:
-    std::optional<Order> GetNextOrder();
-    void StartDelivering(std::vector<std::thread>&);
-
     std::condition_variable cv_;
-    std::mutex mutex_;
     Queue<Order> order_queue_{};
-    Queue<std::promise<Order>> delivery_queue_{};
-    std::array<DeliveryCar, number_of_delivery_cars> delivery_cars_{DeliveryCar{1U}, DeliveryCar{2U}, DeliveryCar{3U}};
+    std::mutex mutex_;
 };
 
 #endif //WAREHOUSE
