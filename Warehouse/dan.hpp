@@ -19,7 +19,7 @@ class Dan
 
     void ProcessOrders();
     void RegisterNewOrder(std::string&&);
-    void MonitorDeliveries(std::future<Order>);
+    void MonitorDelivery(std::future<Order>);
 
   private:
     std::atomic_bool& stop_flag_;

@@ -30,24 +30,17 @@ void Dan::RegisterNewOrder(std::string&& msg)
     warehouse_.AddNewOrder(std::move(msg));
 }
 
-void Dan::MonitorDeliveries(std::future<Order> future)
+void Dan::MonitorDelivery(std::future<Order> future)
 {
-    auto status = std::future_status::timeout;
-    while (status != std::future_status::ready and not stop_flag_.load())
-    {
-        status = future.wait_for(std::chrono::milliseconds(100));
-    }
-
+    const auto expected_time = future.get().expected_delivery_time;
+    auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(expected_time * 1.2)));
+    const auto order = future.get();
     if (status == std::future_status::ready)
     {
-        Order order = future.get();
-        if (order.actual_delivered_time > order.expected_delivery_time * 1.2)
-        {
-            std::cerr << "Dan: Late Delivery! Order: " << order.msg << std::endl;
-        }
-        else
-        {
-            std::cout << "Dan: Order " << order.msg << " delivered on time!" << std::endl;
-        }
+        std::cout << "Dan: Order " << order.msg << " delivered on time!" << std::endl;
+    }
+    else
+    {
+        std::cerr << "Dan: Late Delivery! Order: " << order.msg << std::endl;
     }
 }

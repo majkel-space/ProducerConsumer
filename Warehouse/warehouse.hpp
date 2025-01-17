@@ -3,6 +3,7 @@
 
 #include <condition_variable>
 #include <future>
+#include <memory>
 #include <optional>
 #include "dan.hpp"
 #include "delivery_car.hpp"
@@ -29,8 +30,12 @@ class Warehouse
     std::optional<Order> GetNextOrder();
     bool HasOrders() {return order_queue_.IsEmpty(); }
     std::condition_variable& GetCV() { return cv_; }
+    std::promise<Order> GetOrderPromise(Order&);
 
   private:
+    void NotifyDan(std::future<Order>&&);
+
+    std::unique_ptr<Dan> dan_;
     std::condition_variable cv_;
     Queue<Order> order_queue_{};
     std::mutex mutex_;

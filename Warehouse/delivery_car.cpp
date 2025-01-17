@@ -47,9 +47,10 @@ void DeliveryCar::StartDelivering()
 
 void DeliveryCar::DeliverOrder(Order& order)
 {
+    auto promise = warehouse_.GetOrderPromise(order);
     order.actual_delivered_time = GenerateDeliveryDelay(order.expected_delivery_time);
     std::this_thread::sleep_for(std::chrono::milliseconds(order.actual_delivered_time));
-
+    promise.set_value(order);
     std::cout << "DeliveryCar " << static_cast<int>(id_) << ": " << order.msg << " - DELIVERED"
         << " Expected delivery time: " << order.expected_delivery_time << "ms. Actual time: " << order.actual_delivered_time  << "ms" << std::endl;
 }
