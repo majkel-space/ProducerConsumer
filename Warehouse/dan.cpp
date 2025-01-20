@@ -32,9 +32,9 @@ void Dan::RegisterNewOrder(std::string&& msg)
 
 void Dan::MonitorDelivery(std::future<Order> future)
 {
-    const auto expected_time = future.get().expected_delivery_time;
-    auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(expected_time * 1.2)));
     const auto order = future.get();
+    auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(order.expected_delivery_time * 1.2)));
+
     if (status == std::future_status::ready)
     {
         std::cout << "Dan: Order " << order.msg << " delivered on time!" << std::endl;

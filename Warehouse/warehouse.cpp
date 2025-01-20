@@ -71,12 +71,12 @@ std::promise<Order> Warehouse::GetOrderPromise(Order&)
     std::promise<Order> promise;
     auto future = promise.get_future();
     NotifyDan(std::move(future));
-    return std::move(promise);
+    return promise;
 }
 
 void Warehouse::NotifyDan(std::future<Order>&& future)
 {
-        std::thread([this, future = std::move(future)]() mutable {
-            dan_->MonitorDelivery(std::move(future));
-        }).detach();
+    std::thread([this, future = std::move(future)]() mutable {
+        dan_->MonitorDelivery(std::move(future));
+    }).detach();
 }
