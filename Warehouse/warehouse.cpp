@@ -30,9 +30,10 @@ Warehouse::~Warehouse()
 void Warehouse::OpenWarehouse()
 {
     dan_ = std::make_unique<Dan>(stop_flag, *this);
-    DeliveryCar dc1 (1U, *this, stop_flag);
-    DeliveryCar dc2 (2U, *this, stop_flag);
-    DeliveryCar dc3 (3U, *this, stop_flag);
+    for (auto it = 0U; it < no_of_delivery_cars; ++it)
+    {
+        delivery_cars_.emplace_back(it + 1U, *this);
+    }
 
     while (not stop_flag.load())
     {
@@ -65,18 +66,18 @@ std::optional<Order> Warehouse::GetNextOrder()
     return order_queue_.Pop();
 }
 
-std::promise<Order> Warehouse::GetOrderPromise(Order&)
+std::promise<Order> Warehouse::GetOrderPromise(Order& order)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     std::promise<Order> promise;
     auto future = promise.get_future();
-    NotifyDan(std::move(future));
+    NotifyDan(std::move(future), order);
     return promise;
 }
 
-void Warehouse::NotifyDan(std::future<Order>&& future)
+void Warehouse::NotifyDan(std::future<Order>&& future, Order order)
 {
-    std::thread([this, future = std::move(future)]() mutable {
-        dan_->MonitorDelivery(std::move(future));
+    std::thread([this, order, future = std::move(future)]() mutable {
+        dan_->MonitorDelivery(std::move(future), order);
     }).detach();
 }

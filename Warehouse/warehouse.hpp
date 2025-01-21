@@ -3,6 +3,7 @@
 
 #include <condition_variable>
 #include <future>
+#include <list>
 #include <memory>
 #include <optional>
 #include "dan.hpp"
@@ -33,8 +34,9 @@ class Warehouse
     std::promise<Order> GetOrderPromise(Order&);
 
   private:
-    void NotifyDan(std::future<Order>&&);
+    void NotifyDan(std::future<Order>&&, Order);
 
+    std::list<DeliveryCar> delivery_cars_;
     std::unique_ptr<Dan> dan_;
     std::condition_variable cv_;
     Queue<Order> order_queue_{};

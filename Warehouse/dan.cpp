@@ -30,9 +30,8 @@ void Dan::RegisterNewOrder(std::string&& msg)
     warehouse_.AddNewOrder(std::move(msg));
 }
 
-void Dan::MonitorDelivery(std::future<Order> future)
+void Dan::MonitorDelivery(std::future<Order> future, Order order)
 {
-    const auto order = future.get();
     auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(order.expected_delivery_time * 1.2)));
 
     if (status == std::future_status::ready)

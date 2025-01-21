@@ -12,7 +12,7 @@ struct Order;
 class DeliveryCar
 {
   public:
-    DeliveryCar(std::uint8_t, Warehouse&, std::atomic_bool&);
+    DeliveryCar(std::uint8_t, Warehouse&);
     ~DeliveryCar();
 
   private:
@@ -20,10 +20,8 @@ class DeliveryCar
     void DeliverOrder(Order&);
     std::uint8_t id_;
     Warehouse& warehouse_;
-    std::atomic_bool& stop_flag_;
-    std::condition_variable& cv_;
+    std::atomic_bool stop_flag_;
     std::thread delivery_thread_;
-    std::mutex mutex_;
 };
 
 #endif //DELIVERYCAR

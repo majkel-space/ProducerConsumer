@@ -17,8 +17,8 @@ int GenerateDeliveryDelay(int delivery_time)
     return delivery_time + delivery_time * distribution(gen) / 10;
 }
 
-DeliveryCar::DeliveryCar(std::uint8_t id, Warehouse& warehouse, std::atomic_bool& stop_flag)
-    : id_{id}, warehouse_{warehouse}, stop_flag_{stop_flag}, cv_{warehouse.GetCV()},
+DeliveryCar::DeliveryCar(std::uint8_t id, Warehouse& warehouse)
+    : id_{id}, warehouse_{warehouse}, stop_flag_{false},
       delivery_thread_{std::thread(&DeliveryCar::StartDelivering, this)}
 {}
 
@@ -33,14 +33,17 @@ void DeliveryCar::StartDelivering()
 {
     while (not stop_flag_.load())
     {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this]() { return stop_flag_ or warehouse_.HasOrders(); });
-        if (stop_flag_.load()) { break; }
-        auto order = warehouse_.GetNextOrder();
-        if (order)
+        if (stop_flag_.load() or not warehouse_.HasOrders())
         {
-            lock.unlock();
-            DeliverOrder(order.value());
+            return;
+        }
+        else
+        {
+            auto order = warehouse_.GetNextOrder();
+            if (order)
+            {
+                DeliverOrder(order.value());
+            }
         }
     }
 }
