@@ -75,9 +75,7 @@ std::promise<Order> Warehouse::GetOrderPromise(Order& order)
     return promise;
 }
 
-void Warehouse::NotifyDan(std::future<Order>&& future, Order order)
+void Warehouse::NotifyDan(std::future<Order>&& future, Order& order)
 {
-    std::thread([this, order, future = std::move(future)]() mutable {
-        dan_->MonitorDelivery(std::move(future), order);
-    }).detach();
+    dan_->LaunchMonitorDeliveryThread(std::move(future), order);
 }

@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <future>
-#include <string>
 #include "queue.hpp"
 
 class Warehouse;

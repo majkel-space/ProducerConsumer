@@ -1,11 +1,16 @@
 
 #include <functional>
+#include <iostream>
 #include "dan.hpp"
 
 Dan::Dan(std::atomic_bool& stop_flag, Warehouse& warehouse)
     : stop_flag_{stop_flag}, warehouse_{warehouse}, server_{},
       collect_orders_thread_{std::thread(&Dan::ProcessOrders, this)}
-{}
+{
+    server_.SetOrderCallback([this](std::string order) {
+            this->RegisterNewOrder(std::move(order));
+    });
+}
 
 Dan::~Dan()
 {
@@ -20,17 +25,19 @@ void Dan::ProcessOrders()
 {
     while (not stop_flag_.load())
     {
-        server_.Listen(*this);
+        server_.Listen();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
-void Dan::RegisterNewOrder(std::string&& msg)
+void Dan::LaunchMonitorDeliveryThread(std::future<Order> future, Order& order)
 {
-    warehouse_.AddNewOrder(std::move(msg));
+    std::thread([this, future = std::move(future), &order]() mutable {
+        MonitorDelivery(std::move(future), order);
+    }).detach();
 }
 
-void Dan::MonitorDelivery(std::future<Order> future, Order order)
+void Dan::MonitorDelivery(std::future<Order> future, Order& order)
 {
     auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(order.expected_delivery_time * 1.2)));
 
@@ -42,4 +49,9 @@ void Dan::MonitorDelivery(std::future<Order> future, Order order)
     {
         std::cerr << "Dan: Late Delivery! Order: " << order.msg << std::endl;
     }
+}
+
+void Dan::RegisterNewOrder(std::string&& msg)
+{
+    warehouse_.AddNewOrder(std::move(msg));
 }

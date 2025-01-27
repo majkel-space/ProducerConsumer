@@ -6,6 +6,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+
 #include "dan.hpp"
 #include "delivery_car.hpp"
 #include "queue"
@@ -19,7 +20,6 @@ struct Order
     int actual_delivered_time{};
 };
 
-
 class Warehouse
 {
   public:
@@ -29,12 +29,12 @@ class Warehouse
     void OpenWarehouse();
     void AddNewOrder(std::string&&);
     std::optional<Order> GetNextOrder();
-    bool HasOrders() {return order_queue_.IsEmpty(); }
+    bool HasNoOrders() { return order_queue_.IsEmpty(); }
     std::condition_variable& GetCV() { return cv_; }
     std::promise<Order> GetOrderPromise(Order&);
 
   private:
-    void NotifyDan(std::future<Order>&&, Order);
+    void NotifyDan(std::future<Order>&&, Order&);
 
     std::list<DeliveryCar> delivery_cars_;
     std::unique_ptr<Dan> dan_;
@@ -43,4 +43,4 @@ class Warehouse
     std::mutex mutex_;
 };
 
-#endif //WAREHOUSE
+#endif  // WAREHOUSE

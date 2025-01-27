@@ -1,8 +1,9 @@
 #include <chrono>
-#include <iostream>
 #include <functional>
+#include <iostream>
 #include <random>
 #include <thread>
+
 #include "delivery_car.hpp"
 #include "warehouse.hpp"
 
@@ -18,9 +19,12 @@ int GenerateDeliveryDelay(int delivery_time)
 }
 
 DeliveryCar::DeliveryCar(std::uint8_t id, Warehouse& warehouse)
-    : id_{id}, warehouse_{warehouse}, stop_flag_{false},
+    : id_{id},
+      warehouse_{warehouse},
+      stop_flag_{false},
       delivery_thread_{std::thread(&DeliveryCar::StartDelivering, this)}
-{}
+{
+}
 
 DeliveryCar::~DeliveryCar()
 {
@@ -33,7 +37,7 @@ void DeliveryCar::StartDelivering()
 {
     while (not stop_flag_.load())
     {
-        if (stop_flag_.load() or not warehouse_.HasOrders())
+        if (not warehouse_.HasNoOrders())
         {
             return;
         }
@@ -55,5 +59,6 @@ void DeliveryCar::DeliverOrder(Order& order)
     std::this_thread::sleep_for(std::chrono::milliseconds(order.actual_delivered_time));
     promise.set_value(order);
     std::cout << "DeliveryCar " << static_cast<int>(id_) << ": " << order.msg << " - DELIVERED"
-        << " Expected delivery time: " << order.expected_delivery_time << "ms. Actual time: " << order.actual_delivered_time  << "ms" << std::endl;
+              << " Expected delivery time: " << order.expected_delivery_time
+              << "ms. Actual time: " << order.actual_delivered_time << "ms" << std::endl;
 }

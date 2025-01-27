@@ -3,10 +3,11 @@
 
 #include <cstdint>
 #include <cstring>
+#include <fcntl.h>
+#include <functional>
+#include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include "queue.hpp"
 
@@ -21,19 +22,21 @@ class Server
     Server();
     ~Server();
 
-    void Listen(Dan&);
+    void Listen();
+    void SetOrderCallback(std::function<void(std::string)>);
 
   private:
     void CreateSocket();
     void RegisterSocketWithEpoll();
     bool RegisterClientWithEpoll(int&);
-    void HandleConnection(Dan&, int&);
+    void HandleConnection(int&);
     void SendConfirmation(int&, const std::string&);
 
     struct sockaddr_in server_;
     int server_socket_, epoll_socket_;
     const uint16_t port_ = 1234;
     struct epoll_event epoll_fd_, waiting_events_[max_orders];
+    std::function<void(std::string)> order_callback_;
 };
 
 #endif //SERVER

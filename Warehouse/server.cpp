@@ -1,10 +1,10 @@
-#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <random>
 #include <thread>
-#include "dan.hpp"
 #include "server.hpp"
+
+static constexpr int server_timeout{1000};
 
 int SetNonBlocking(int& socket)
 {
@@ -78,9 +78,9 @@ void Server::RegisterSocketWithEpoll()
     puts("Socket registered with epoll");
 }
 
-void Server::Listen(Dan& dan)
+void Server::Listen()
 {
-    int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, -1);
+    int number_of_events = epoll_wait(epoll_socket_, waiting_events_, max_orders, server_timeout);
     for (int it = 0; it < number_of_events; ++it) {
         if (waiting_events_[it].data.fd == server_socket_)
         {
@@ -99,9 +99,14 @@ void Server::Listen(Dan& dan)
         }
         else
         {
-            HandleConnection(dan, it);
+            HandleConnection(it);
         }
     }
+}
+
+void Server::SetOrderCallback(std::function<void(std::string)> callback)
+{
+    order_callback_ = std::move(callback);
 }
 
 bool Server::RegisterClientWithEpoll(int& client_fd)
@@ -115,7 +120,7 @@ bool Server::RegisterClientWithEpoll(int& client_fd)
     return true;
 }
 
-void Server::HandleConnection(Dan& dan, int& event_no)
+void Server::HandleConnection(int& event_no)
 {
     char buffer[BUFFER_SIZE];
     int client_fd = waiting_events_[event_no].data.fd;
@@ -131,7 +136,14 @@ void Server::HandleConnection(Dan& dan, int& event_no)
         std::string message(buffer, count);
         std::cout << "Received from client: " << message << std::endl;
         SendConfirmation(client_fd, message);
-        dan.RegisterNewOrder(std::move(message));
+        if (order_callback_)
+        {
+            order_callback_(std::move(message));
+        }
+        else
+        {
+            std::cerr << "Error: No order callback registered\n";
+        }
     }
 }
 

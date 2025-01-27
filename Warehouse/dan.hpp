@@ -2,7 +2,6 @@
 #define DAN
 
 #include <atomic>
-#include <iostream>
 #include <future>
 #include "queue.hpp"
 #include "server.hpp"
@@ -18,10 +17,12 @@ class Dan
     ~Dan();
 
     void ProcessOrders();
-    void RegisterNewOrder(std::string&&);
-    void MonitorDelivery(std::future<Order>, Order);
+    void LaunchMonitorDeliveryThread(std::future<Order>, Order&);
 
   private:
+    void MonitorDelivery(std::future<Order>, Order&);
+    void RegisterNewOrder(std::string&&);
+
     std::atomic_bool& stop_flag_;
     Server server_;
     Warehouse& warehouse_;
