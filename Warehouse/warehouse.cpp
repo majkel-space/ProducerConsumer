@@ -24,6 +24,7 @@ Warehouse::Warehouse()
 
 Warehouse::~Warehouse()
 {
+    cv_.notify_all();
     stop_flag.store(true);
 }
 
@@ -34,12 +35,6 @@ void Warehouse::OpenWarehouse()
     {
         delivery_cars_.emplace_back(it + 1U, *this);
     }
-
-    while (not stop_flag.load())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    cv_.notify_all();
 }
 
 void Warehouse::AddNewOrder(std::string&& msg)

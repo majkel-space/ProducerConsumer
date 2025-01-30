@@ -30,14 +30,14 @@ void Dan::ProcessOrders()
     }
 }
 
-void Dan::LaunchMonitorDeliveryThread(std::future<Order> future, Order& order)
+void Dan::LaunchMonitorDeliveryThread(std::future<Order> future, Order order)
 {
-    std::thread([this, future = std::move(future), &order]() mutable {
+    std::thread([this, future = std::move(future), order]() mutable {
         MonitorDelivery(std::move(future), order);
     }).detach();
 }
 
-void Dan::MonitorDelivery(std::future<Order> future, Order& order)
+void Dan::MonitorDelivery(std::future<Order> future, Order order)
 {
     auto status = future.wait_for(std::chrono::milliseconds(static_cast<int>(order.expected_delivery_time * 1.2)));
 

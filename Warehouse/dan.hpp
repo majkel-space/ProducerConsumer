@@ -17,10 +17,10 @@ class Dan
     ~Dan();
 
     void ProcessOrders();
-    void LaunchMonitorDeliveryThread(std::future<Order>, Order&);
+    void LaunchMonitorDeliveryThread(std::future<Order>, Order);
 
   private:
-    void MonitorDelivery(std::future<Order>, Order&);
+    void MonitorDelivery(std::future<Order>, Order);
     void RegisterNewOrder(std::string&&);
 
     std::atomic_bool& stop_flag_;
